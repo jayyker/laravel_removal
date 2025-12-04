@@ -166,6 +166,8 @@
                 if (!confirm('Are you sure you want to delete this product?')) return;
                 
                 try {
+                    console.log('Deleting product ID:', id);
+                    
                     const response = await fetch(`/api/products/${id}`, {
                         method: 'DELETE',
                         headers: {
@@ -175,14 +177,18 @@
                     });
                     
                     const data = await response.json();
+                    console.log('Delete response:', data);
                     
                     if (data.success) {
+                        console.log('Delete successful, refreshing products...');
                         await fetchProducts();
-                        alert('Product deleted successfully!');
+                        alert('Product deleted and IDs renumbered!');
                     } else {
+                        console.error('Delete failed:', data.message);
                         alert('Error: ' + (data.message || 'Delete failed'));
                     }
                 } catch (error) {
+                    console.error('Delete error:', error);
                     alert('Network error: ' + error.message);
                 }
             };
@@ -421,42 +427,77 @@
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
-                                            {filteredProducts.map((product, index) => (
-                                                <tr key={product.id} className="hover:bg-gray-50">
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
-                                                        {index + 1}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                        {product.name}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                        {product.sku}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        {formatPrice(product.price)}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                        {product.quantity}
-                                                    </td>
-                                                    <td className="px-6 py-4 text-sm text-gray-600">
-                                                        {product.description || '-'}
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                        <button
-                                                            onClick={() => handleEdit(product)}
-                                                            className="text-blue-600 hover:text-blue-900 mr-3"
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDelete(product.id)}
-                                                            className="text-red-600 hover:text-red-900"
-                                                        >
-                                                            Delete
-                                                        </button>
+                                            {loading ? (
+                                                <tr>
+                                                    <td colSpan="7" className="text-center py-4">
+                                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                                                        <p className="mt-2 text-gray-600">Loading products...</p>
                                                     </td>
                                                 </tr>
-                                            ))}
+                                            ) : filteredProducts.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan="7" className="text-center py-4">
+                                                        <div className="text-gray-400 mb-4">
+                                                            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                                            </svg>
+                                                        </div>
+                                                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                                                            {searchTerm ? 'No matching products found' : 'No products in database'}
+                                                        </h3>
+                                                        <p className="text-gray-600 mb-4">
+                                                            {searchTerm 
+                                                                ? 'Try a different search term' 
+                                                                : 'Click "Add New Product" to create your first product'}
+                                                        </p>
+                                                        {!searchTerm && (
+                                                            <button
+                                                                onClick={() => setShowForm(true)}
+                                                                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-medium"
+                                                            >
+                                                                Add Your First Product
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                filteredProducts.map((product, index) => (
+                                                    <tr key={product.id} className="hover:bg-gray-50">
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold text-lg bg-blue-100">
+                                                            ID: {product.id || 'N/A'}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                            {product.name}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                            {product.sku}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                            {formatPrice(product.price)}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                            {product.quantity}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-sm text-gray-600">
+                                                            {product.description || '-'}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                            <button
+                                                                onClick={() => handleEdit(product)}
+                                                                className="text-blue-600 hover:text-blue-900 mr-3"
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDelete(product.id)}
+                                                                className="text-red-600 hover:text-red-900"
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>

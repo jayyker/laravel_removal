@@ -106,23 +106,53 @@ class ProductController extends Controller
         ]);
     }
 
-    // Delete product
+    // Delete product and renumber ALL database IDs
     public function destroy($id)
     {
-        $product = Product::find($id);
-
-        if (!$product) {
+        \DB::beginTransaction();
+        try {
+            // 1. Delete the product
+            $product = Product::findOrFail($id);
+            $product->delete();
+            
+            // 2. Get all remaining products
+            $remainingProducts = Product::orderBy('id')->get();
+            
+            // 3. Truncate and reinsert with sequential IDs
+            \DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            Product::truncate();
+            
+            $newId = 1;
+            foreach ($remainingProducts as $product) {
+                Product::create([
+                    'name' => $product->name,
+                    'sku' => $product->sku,
+                    'price' => $product->price,
+                    'quantity' => $product->quantity,
+                    'description' => $product->description,
+                    'created_at' => $product->created_at,
+                    'updated_at' => now(),
+                ]);
+                $newId++;
+            }
+            
+            // 4. Reset auto-increment
+            \DB::statement("ALTER TABLE products AUTO_INCREMENT = $newId");
+            \DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            
+            \DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Product deleted. All IDs are now sequential.'
+            ]);
+            
+        } catch (\Exception $e) {
+            \DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Product not found'
-            ], 404);
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
         }
-
-        $product->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Product deleted successfully'
-        ]);
     }
 }
