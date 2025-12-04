@@ -13,7 +13,7 @@ Route::delete('/products/{product}', [ProductController::class, 'destroy'])->nam
 
 // React app route
 Route::get('/react', function () {
-    return view('react');
+    return view('products.react');
 });
 
 // Renumber products route
