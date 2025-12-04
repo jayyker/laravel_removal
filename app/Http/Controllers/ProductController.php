@@ -10,30 +10,15 @@ class ProductController extends Controller
     /**
      * Display a listing of products.
      */
-    public function index(Request $request)
+    public function index()
     {
-        $query = Product::query();
-
-        // Filter by name if search parameter is provided
-        if ($request->has('search') && $request->search !== null) {
-            $query->where('name', 'like', '%' . $request->search . '%');
-        }
-
-        $products = $query->paginate(10);
-
-        if ($request->wantsJson()) {
-            return response()->json($products);
-        }
-
+        // Get ALL products
+        $products = Product::all();
+        
+        // For debugging
+        \Log::info('Products count: ' . $products->count());
+        
         return view('products.index', compact('products'));
-    }
-
-    /**
-     * Show the form for creating a new product.
-     */
-    public function create()
-    {
-        return view('products.create');
     }
 
     /**
@@ -43,50 +28,45 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'sku' => 'required|string|unique:products,sku',
             'price' => 'required|numeric|min:0',
             'quantity' => 'required|integer|min:0',
-            'sku' => 'required|string|unique:products,sku',
+            'description' => 'nullable|string'
         ]);
-
+        
         Product::create($validated);
-
-        return redirect()->route('products.index')->with('success', 'Product created successfully.');
-    }
-
-    /**
-     * Show the form for editing the specified product.
-     */
-    public function edit(Product $product)
-    {
-        return view('products.edit', compact('product'));
+        
+        return response()->json(['success' => true, 'message' => 'Product created successfully']);
     }
 
     /**
      * Update the specified product in storage.
      */
-    public function update(Request $request, Product $product)
+    public function update(Request $request, $id)
     {
+        $product = Product::findOrFail($id);
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'sku' => 'required|string|unique:products,sku,' . $id,
             'price' => 'required|numeric|min:0',
             'quantity' => 'required|integer|min:0',
-            'sku' => 'required|string|unique:products,sku,' . $product->id,
+            'description' => 'nullable|string'
         ]);
-
+        
         $product->update($validated);
-
-        return redirect()->route('products.index')->with('success', 'Product updated successfully.');
+        
+        return response()->json(['success' => true, 'message' => 'Product updated successfully']);
     }
 
     /**
      * Remove the specified product from storage.
      */
-    public function destroy(Product $product)
+    public function destroy($id)
     {
+        $product = Product::findOrFail($id);
         $product->delete();
-
-        return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
+        
+        return response()->json(['success' => true, 'message' => 'Product deleted successfully']);
     }
 }
