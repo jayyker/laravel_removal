@@ -36,6 +36,12 @@
         </div>
     </form>
 
+    <div id="example"></div>
+
+    <script>
+        window.__PRODUCTS__ = @json($products);
+    </script>
+
     <!-- Products Table -->
     @if($products->count())
         <div class="overflow-x-auto">
@@ -54,7 +60,7 @@
                 <tbody>
                     @foreach($products as $product)
                         <tr class="hover:bg-gray-100">
-                            <td class="border border-gray-300 px-4 py-2">{{ $product->id }}</td>
+                            <td class="border border-gray-300 px-4 py-2">{{ ($products->currentPage() - 1) * $products->perPage() + $loop->iteration }}</td>
                             <td class="border border-gray-300 px-4 py-2">{{ $product->name }}</td>
                             <td class="border border-gray-300 px-4 py-2">{{ $product->sku }}</td>
                             <td class="border border-gray-300 px-4 py-2">${{ number_format($product->price, 2) }}</td>

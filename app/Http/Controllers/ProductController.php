@@ -21,6 +21,10 @@ class ProductController extends Controller
 
         $products = $query->paginate(10);
 
+        if ($request->wantsJson()) {
+            return response()->json($products);
+        }
+
         return view('products.index', compact('products'));
     }
 
